@@ -58,6 +58,31 @@ constexpr auto Dec = [](auto number) {
         (__increment__(__second__(number)));
 };
 
+// OPERACOES
+
+constexpr auto __add__(auto m) {
+    return [m](auto n) {
+        return [m, n](auto f) {
+            return [f, m, n](auto x) {
+                return m(f)(n(f)(x));
+            };
+        };
+    };
+};
+
+constexpr auto Add = [](auto a) {
+    return [a](auto b) {
+        auto x1 = __first__(a);
+        auto y1 = __second__(a);
+        auto x2 = __first__(b);
+        auto y2 = __second__(b);
+
+        return __make_int_pair__
+            (__add__(x1)(x2))
+            (__add__(y1)(y2));
+    };
+};
+
 // CONVERSOR NATIVO
 constexpr auto to_uint(auto number) {
     auto inc = [](int counter) { return counter + 1; };

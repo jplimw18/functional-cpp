@@ -46,5 +46,10 @@ int main()
 
     cout << to_int(num) << endl;
     cout << to_int(neg_num) << endl;
+
+
+    auto sum = Add(Inc(Zero))(Inc(Zero));
+
+    cout << to_int(sum) << endl;
     return 0;
 }
