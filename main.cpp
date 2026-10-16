@@ -1,6 +1,8 @@
 #include <iostream>
 #include "headers/booleanf.h"
 #include "headers/numbersf.h"
+#include "headers/wrappersf.h"
+#include "headers/operatorsf.h"
 
 using namespace std;
 
@@ -55,6 +57,43 @@ int main()
     cout << to_int(sum) << endl;
     cout << to_int(sub) << endl;
     cout << to_int(times) << endl;
+
+    auto some = Some(Zero);
+    auto none = None;
     
+    auto st = is_some(some);
+    auto nt = is_some(none);
+
+    auto ntt = is_none(none);
+    auto nst = is_none(some);
+
+    cout << "========\n" << "some/none" << endl;
+    cout << to_boolean(ntt) << endl;
+    cout << to_boolean(nst) << endl;
+
+    cout << to_boolean(st) << endl;
+    cout << to_boolean(nt) << endl;
+
+    cout << "teste soma fmap" << endl;
+    auto finc_n = fmap(Inc)(None);
+    auto finc_s = fmap(Inc)(Some(Zero));
+
+    
+    auto nfinc = "não é possível operar em cima de None";
+    auto sfinc = "O resultado da operações é: ";
+    auto rnmsg = if_then_or(is_some(finc_n))
+        ([nfinc]() { return nfinc; })
+        ([sfinc, finc_s]() { 
+            return to_int(unwrap(finc_s)); 
+        });
+
+    cout << rnmsg() << endl;
+
+    auto fc = Some(Zero) > fmap(Inc);
+    auto incc = Zero > Inc > Inc;
+
+    cout << to_int(incc) << endl;
+    cout << to_int(unwrap(fc)) << endl;
+
     return 0;
 }

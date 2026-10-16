@@ -7,6 +7,7 @@
 template <typename F>
 const F __number__(F& f) { return f; };
 
+
 // operacao OPERACAO MINIMA
 constexpr auto __increment__(auto x) {
     return [x](auto f) {
@@ -18,7 +19,7 @@ constexpr auto __increment__(auto x) {
 
 
 // UNIDADE MINIMA
-const auto __zero__ = [](auto f) { 
+constexpr auto __zero__ = [](auto f) { 
     return [f](auto x) { return x; };
 };
 
@@ -28,8 +29,8 @@ constexpr auto is_zero(auto x) {
     return x([](auto x) { return False; })(True);
 };
 
-// TENTANDO DEFINIR INTEIROS
-const auto __int_pair__ = [](auto x) {
+// TENTANDO DEFINIR INTEIROs
+constexpr auto __int_pair__ = [](auto x) {
     return [x](auto y) {
         return [x, y](auto f) {
             return f(x)(y);
@@ -117,6 +118,7 @@ constexpr auto Times = [](auto a) {
         return __int_pair__(pos)(neg);
     };
 };
+
 
 // CONVERSOR NATIVO
 constexpr auto to_uint(auto number) {
