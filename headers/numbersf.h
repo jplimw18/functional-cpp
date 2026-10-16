@@ -70,6 +70,14 @@ constexpr auto __add__(auto m) {
     };
 };
 
+constexpr auto __times__(auto m) {
+    return [m](auto n) {
+        return [m,n](auto f) {
+            return m(n(f));
+        };
+    };
+};
+
 constexpr auto Add = [](auto a) {
     return [a](auto b) {
         auto x1 = __first__(a);
@@ -80,6 +88,33 @@ constexpr auto Add = [](auto a) {
         return __make_int_pair__
             (__add__(x1)(x2))
             (__add__(y1)(y2));
+    };
+};
+
+constexpr auto Sub = [](auto a) {
+    return [a](auto b) {
+        auto x1 = __first__(a);
+        auto y1 = __second__(a);
+        auto x2 = __first__(b);
+        auto y2 = __second__(b);
+
+        return __make_int_pair__
+            (__add__(x1)(y2))
+            (__add__(y1)(x2));
+    };
+};
+
+constexpr auto Times = [](auto a) {
+    return [a](auto b) {
+        auto x1 = __first__(a);
+        auto y1 = __second__(a);
+        auto x2 = __first__(b);
+        auto y2 = __second__(b);
+
+        auto pos = __add__(__times__(x1)(x2))(__times__(y1)(y2));
+        auto neg = __add__(__times__(x1)(y2))(__times__(y1)(x2));
+
+        return __int_pair__(pos)(neg);
     };
 };
 

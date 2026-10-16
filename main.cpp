@@ -49,7 +49,12 @@ int main()
 
 
     auto sum = Add(Inc(Zero))(Inc(Zero));
+    auto sub = Sub(Inc(Inc(Zero)))(Inc(Zero));
+    auto times = Times(Inc(Inc(Zero)))(Inc(Inc(Inc(Zero))));
 
     cout << to_int(sum) << endl;
+    cout << to_int(sub) << endl;
+    cout << to_int(times) << endl;
+    
     return 0;
 }
