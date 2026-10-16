@@ -41,8 +41,8 @@ int main()
 
     cout << to_boolean(k) << endl;
 
-    auto an = Zero;
+    auto num = Inc(Inc(Zero));
 
-    cout << to_int(an) << endl;
+    cout << to_int(num) << endl;
     return 0;
 }
