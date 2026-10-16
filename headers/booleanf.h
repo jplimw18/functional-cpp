@@ -18,17 +18,17 @@ const auto False = __bool__(__false__);
 
 // OPERADORES
 
-const auto fnot(auto p) {
+constexpr auto fnot(auto p) {
     return p(False)(True);
 };
 
-const auto fand(auto p) {
+constexpr auto fand(auto p) {
     return [p](auto q) {
         return p(q)(False);
     };
 };
 
-const auto ffor(auto p) {
+constexpr auto ffor(auto p) {
     return [p](auto q) {
         return p(True)(q);
     };
@@ -36,7 +36,7 @@ const auto ffor(auto p) {
 
 // CONDICIONAIS
 
-const auto if_then_or(auto condition) {
+constexpr auto if_then_or(auto condition) {
     return [condition](auto then) {
         return [condition, then](auto then_or) {
             return condition(then)(then_or);
@@ -45,7 +45,7 @@ const auto if_then_or(auto condition) {
 };
 
 // CONVERSORES NATIVOS
-const auto to_boolean(auto p) {
+constexpr auto to_boolean(auto p) {
     return p(true)(false);
 };
 

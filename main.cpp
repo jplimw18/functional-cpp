@@ -42,7 +42,9 @@ int main()
     cout << to_boolean(k) << endl;
 
     auto num = Inc(Inc(Zero));
+    auto neg_num = Dec(Zero);
 
     cout << to_int(num) << endl;
+    cout << to_int(neg_num) << endl;
     return 0;
 }
