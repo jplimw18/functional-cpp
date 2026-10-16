@@ -22,6 +22,20 @@ constexpr auto fnot(auto p) {
     return p(False)(True);
 };
 
+constexpr auto fand(auto p) {
+    return [p](auto q) {
+        return p(q)(False);
+    };
+};
+
+constexpr auto ffor(auto p) {
+    return [p](auto q) {
+        return p(True)(q);
+    };
+};
+
+// CONDICIONAIS
+
 // CONVERSORES NATIVOS
 constexpr auto to_boolean(auto p) {
     return p(true)(false);
