@@ -53,11 +53,14 @@ constexpr auto Inc = [](auto number) {
         (__second__(number));
 };
 
+
 constexpr auto Dec = [](auto number) {
     return __make_int_pair__
         (__first__(number))
         (__increment__(__second__(number)));
 };
+
+
 
 // OPERACOES
 
@@ -92,6 +95,8 @@ constexpr auto Add = [](auto a) {
     };
 };
 
+
+
 constexpr auto Sub = [](auto a) {
     return [a](auto b) {
         auto x1 = __first__(a);
@@ -119,6 +124,8 @@ constexpr auto Times = [](auto a) {
     };
 };
 
+
+// OPERADORES
 
 // CONVERSOR NATIVO
 constexpr auto to_uint(auto number) {

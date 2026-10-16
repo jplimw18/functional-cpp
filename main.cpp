@@ -89,11 +89,9 @@ int main()
 
     cout << rnmsg() << endl;
 
-    auto fc = Some(Zero) > fmap(Inc);
-    auto incc = Zero > Inc > Inc;
-
-    cout << to_int(incc) << endl;
-    cout << to_int(unwrap(fc)) << endl;
-
+    auto double_inc = Inc >> Inc >> Inc;
+    auto rd = double_inc $ Zero;
+    auto int_rd = to_int(rd);
+    cout << int_rd << endl; 
     return 0;
 }
