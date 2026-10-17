@@ -1,8 +1,6 @@
 #ifndef BOOLEANF_H
 #define BOOLEANF_H
 
-#include "typesf.hpp"
-
 // base
 constexpr auto Bool = f [](bool native) {
     return f [native](auto x) {

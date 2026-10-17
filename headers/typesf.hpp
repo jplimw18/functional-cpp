@@ -69,4 +69,31 @@ constexpr auto operator <<(FnWrapProxy, T&& fn) {
     return Fn<std::decay_t<T>>(std::forward<T>(fn));
 };
 
+
+struct RecurseProxy {};
+constexpr RecurseProxy RECURSE{};
+#define ff RECURSE<<
+
+template <typename T>
+struct RHSRecurseProxy {
+    T rhs;
+
+    constexpr explicit RHSRecurseProxy(T r) : rhs(std::move(r)) { }
+    
+    template <typename... Args>
+    constexpr decltype(auto) operator()(Args&&... args) const & {
+        return rhs(*this, std::forward<Args>(args)...);
+    };
+
+    template <typename... Args>
+    constexpr decltype(auto) opeartor()(Args&&... args) && {
+        return std::move(rhs)(*this, std::forward<Args>(args)...);
+    };
+};
+
+template <typename T>
+constexpr auto operator <<(RecurseProxy, T&& rhs) {
+    return Fn{ RHSRecurseProxy<std::decay_t<T>>(std::forward<T>(rhs)) };
+};
+
 #endif
