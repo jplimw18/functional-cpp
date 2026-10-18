@@ -28,44 +28,63 @@ struct is_unary_trait<ReturnType(ClassType::*)(Args...) noexcept(NExcept)> {
 // isso me garante (talvez) que eu consiga detectar tipos que não sejam funções entrando na minha Fn
 // o problema é que não da para verificar o número de argumentos (a função precisa ser chamada, quando se trata de genérico)
 // ^ esse problema eu resolve no operator() de fn, vale conferir e mais tarde pensar em alo que possa me relevar os args antes de precisar chamar a funcao
+struct FnOperatorInjection { void operator()(); };
+template <typename F>
+struct FnTest : F, FnOperatorInjection { };
+
 template <typename F> 
 concept HasExplicitUnaryOperator = requires  { &F::operator(); } && is_unary_trait<decltype(&F::operator())>::is_unary;
 
 template <typename F>
 concept HasHiddenOperator = !requires { &F::operator(); } && std::is_class_v<F> && !requires { &FnTest<F>::operator(); };
 
-struct FnOperatorInjection { void operator()(); };
-template <typename F>
-struct FnTest : F, FnOperatorInjection { };
 
 template <typename F>
 concept IsUnary = HasExplicitUnaryOperator<F> 
-    || HasHiddenOperator<F>;
+|| HasHiddenOperator<F>;
+
+// outro helper para verificar se um T é um Fn<> para que eu saiba quando evelopar ou não um resultaoo
+template <typename F>
+requires IsUnary<F>
+struct Fn;
+
+template <typename T>
+struct is_fn_instance : std::false_type { };
+
+template <typename T>
+struct is_fn_instance<Fn<T>> : std::true_type { };
+
+template <typename T>
+inline constexpr bool is_fn_instance_v = is_fn_instance<T>::value;
+
+
 
 // meu tipo base tentando centralizar algo para que o compilador não chore
 template <typename F>
 requires IsUnary<F> // meu teste para rejeitar em tempo de compilação qualquer coisa que não seja uma função
 struct Fn {
     F func;
-
+    
     constexpr explicit Fn(F fn) : func(std::move(fn)) { };
-
+    
+    
     template <typename... Arg>
     requires (sizeof... (Arg) == 1) && std::invocable<decltype(func), Arg...>
     constexpr decltype(auto) operator()(Arg&&... arg) const & {
         auto r = func(std::forward<Arg>(arg)...);
-        if constexpr (std::is_function_v<decltype(r)>) { return Fn<decltype(r)>(r); };
-
-        return r;
+        using T = decltype(r);
+        if constexpr (IsUnary<T> && !is_fn_instance_v<T>){ return Fn<T>(r); }
+        else return r;
     };
-
+    
     template <typename... Arg>
     requires (sizeof... (Arg) == 1) && std::invocable<decltype(func), Arg...>
     constexpr decltype(auto) operator()(Arg&&... arg) && {
+        
         auto r = std::move(func)(std::forward<Arg>(arg)...);
-        if constexpr (std::is_function_v<decltype(r)>) { return Fn<decltype(r)>(r); };
-
-        return r;
+        using T = decltype(r);
+        if constexpr (IsUnary<T> && !is_fn_instance_v<T>) { return Fn<T>(r); }
+        else return r;
     };
 };
 
@@ -91,9 +110,9 @@ constexpr AppProxy APP{};
 template <typename T>
 struct LHSAppProxy {
     T lhs;
-
+    
     constexpr explicit LHSAppProxy(T l) : lhs(std::forward<T>(l)) { };
-
+    
     template <typename... Arg>
     requires (sizeof... (Arg) == 1)
     constexpr decltype(auto) operator>(Arg&&... args) const {
@@ -114,11 +133,9 @@ template <typename F, typename G>
 constexpr decltype(auto) operator >>(const Fn<F>& fn, const Fn<G>& gn) {
     return f [l = fn.func, r = gn.func](auto&&... args) {
         auto result = r(l(std::forward<decltype(args)>(args)...));
-        if constexpr (std::is_function_v<decltype(result)>) { 
-            return Fn<decltype(result)>(result);
-        };
-        
-        return result;
+        using T = decltype(result);
+        if constexpr (IsUnary<T> && !is_fn_instance_v<T>) { return Fn<T>(result); }
+        else return result;
     };
 };
 
