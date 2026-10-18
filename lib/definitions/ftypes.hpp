@@ -26,18 +26,25 @@ struct is_unary_trait<ReturnType(ClassType::*)(Args...) noexcept(NExcept)> {
 
 // auxiliar para barrar tipos que não tenham operator() 
 // isso me garante (talvez) que eu consiga detectar tipos que não sejam funções entrando na minha Fn
+// o problema é que não da para verificar o número de argumentos (a função precisa ser chamada, quando se trata de genérico)
+// ^ esse problema eu resolve no operator() de fn, vale conferir e mais tarde pensar em alo que possa me relevar os args antes de precisar chamar a funcao
+template <typename F> 
+concept HasExplicitUnaryOperator = requires  { &F::operator(); } && is_unary_trait<decltype(&F::operator())>::is_unary;
+
+template <typename F>
+concept HasHiddenOperator = !requires { &F::operator(); } && std::is_class_v<F> && !requires { &FnTest<F>::operator(); };
 
 struct FnOperatorInjection { void operator()(); };
 template <typename F>
 struct FnTest : F, FnOperatorInjection { };
-// caller para verificar as paradas de unário
+
 template <typename F>
-concept IsUnary = requires { &F::operator(); } && is_unary_trait<decltype(&F::operator())>::is_unary
-    || !requires { &F::operator(); } && std::is_class_v<F> && !requires { &FnTest<F>::operator(); };
+concept IsUnary = HasExplicitUnaryOperator<F> 
+    || HasHiddenOperator<F>;
 
 // meu tipo base tentando centralizar algo para que o compilador não chore
 template <typename F>
-requires IsUnary<F>
+requires IsUnary<F> // meu teste para rejeitar em tempo de compilação qualquer coisa que não seja uma função
 struct Fn {
     F func;
 

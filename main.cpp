@@ -32,6 +32,7 @@ constexpr auto b = [](auto x) {
 int main() 
 {           
     auto v = Fn<Void>(Void{});
+    auto i = Fn<int>(2);
     auto fa = Fn(a);
     auto fid = Fn(id);
     return 0;
