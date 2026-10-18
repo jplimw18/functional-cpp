@@ -1,0 +1,107 @@
+#ifndef FTYPES_H
+#define FTYPES_H
+
+#include <utility>
+#include <concepts>
+
+
+// definindo as traits para garantir funcoes unárias
+template <typename T>
+struct is_unary_trait {
+    static constexpr std::size_t arity = 0;
+    static constexpr bool is_unary = false;
+};
+
+template <typename ClassType, typename ReturnType, bool NExcept, typename... Args>
+struct is_unary_trait<ReturnType(ClassType::*)(Args...) const noexcept(NExcept)> {
+    static constexpr std::size_t arity = sizeof ...(Args);
+    static constexpr bool is_unary = arity == 1;
+};
+
+template <typename ClassType, typename ReturnType, bool NExcept, typename... Args>
+struct is_unary_trait<ReturnType(ClassType::*)(Args...) noexcept(NExcept)> {
+    static constexpr std::size_t arity = sizeof ...(Args);
+    static constexpr bool is_unary = arity == 1;
+};
+
+// caller para verificar as paradas de unário
+template <typename F>
+concept IsUnary = requires { &F::operator(); } && is_unary_trait<decltype(&F::operator())>::is_unary
+    || ! requires { &F::operator(); };
+
+// meu tipo base tentando centralizar algo para que o compilador não chore
+template <typename F>
+requires IsUnary<F>
+struct Fn {
+    F func;
+
+    constexpr explicit Fn(F fn) : func(fn) { };
+
+    template <typename... Arg>
+    requires (sizeof... (Arg) == 1) && std::invocable<decltype(func), Arg...>
+    constexpr decltype(auto) operator()(Arg&&... arg) const & {
+        auto r = func(std::forward<Arg>(arg)...);
+        if constexpr (std::invocable<decltype(r)>) { return Fn<decltype(r)>(r); };
+
+        return r;
+    };
+
+    template <typename... Arg>
+    requires (sizeof... (Arg) == 1) && std::invocable<decltype(func), Arg...>
+    constexpr decltype(auto) operator()(Arg&&... arg) && {
+        auto r = std::move(func)(std::forward<Arg>(arg)...);
+        if constexpr (std::invocable<decltype(r)>) { return Fn<decltype(r)>(r); };
+
+        return r;
+    };
+};
+
+template <typename T>
+Fn(T) -> Fn<T>;
+
+
+// para facilitar a declaracao de fn, assim fica mais bonito de criar as funç~eos (eu acho)
+struct FnWrapProxy {};
+constexpr FnWrapProxy FWRAP{};
+#define f FWRAP<<
+
+template <typename T>
+constexpr auto operator <<(FnWrapProxy, T&& fn) {
+    return Fn<std::decay_t<T>>(std::forward<T>(fn));
+};
+
+// $ para applicar funcoes (tentei abvordar algo parecido com o que vi de haskell)
+struct AppProxy {};
+constexpr AppProxy APP{};
+#define $ <APP>
+
+template <typename T>
+struct LHSAppProxy {
+    T lhs;
+
+    constexpr explicit LHSAppProxy(T l) : lhs(std::forward<T>(l)) { };
+
+    template <typename... Arg>
+    requires (sizeof... (Arg) == 1)
+    constexpr decltype(auto) operator>(Arg&&... args) const {
+        return lhs(std::forward<Arg>(args)...);
+    };
+};
+
+template <typename F>
+constexpr decltype(auto) operator<(const Fn<F>& lhs, AppProxy) {
+    return LHSAppProxy<Fn<F>>(lhs);    
+};
+
+
+
+// >> composição :D
+
+template <typename F, typename G>
+constexpr decltype(auto) operator >>(const Fn<F>& fn, const Fn<G>& gn) {
+    return f [l = fn.func, r = gn.func](auto&&... args) {
+        return r(l(std::forward<decltype(args)>(args)...));
+    };
+};
+
+#endif
