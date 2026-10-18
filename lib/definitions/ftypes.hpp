@@ -24,10 +24,16 @@ struct is_unary_trait<ReturnType(ClassType::*)(Args...) noexcept(NExcept)> {
     static constexpr bool is_unary = arity == 1;
 };
 
+// auxiliar para barrar tipos que não tenham operator() 
+// isso me garante (talvez) que eu consiga detectar tipos que não sejam funções entrando na minha Fn
+
+struct FnOperatorInjection { void operator()(); };
+template <typename F>
+struct FnTest : F, FnOperatorInjection { };
 // caller para verificar as paradas de unário
 template <typename F>
 concept IsUnary = requires { &F::operator(); } && is_unary_trait<decltype(&F::operator())>::is_unary
-    || ! requires { &F::operator(); };
+    || !requires { &F::operator(); } && std::is_class_v<F> && !requires { &FnTest<F>::operator(); };
 
 // meu tipo base tentando centralizar algo para que o compilador não chore
 template <typename F>
@@ -35,13 +41,13 @@ requires IsUnary<F>
 struct Fn {
     F func;
 
-    constexpr explicit Fn(F fn) : func(fn) { };
+    constexpr explicit Fn(F fn) : func(std::move(fn)) { };
 
     template <typename... Arg>
     requires (sizeof... (Arg) == 1) && std::invocable<decltype(func), Arg...>
     constexpr decltype(auto) operator()(Arg&&... arg) const & {
         auto r = func(std::forward<Arg>(arg)...);
-        if constexpr (std::invocable<decltype(r)>) { return Fn<decltype(r)>(r); };
+        if constexpr (std::is_function_v<decltype(r)>) { return Fn<decltype(r)>(r); };
 
         return r;
     };
@@ -50,7 +56,7 @@ struct Fn {
     requires (sizeof... (Arg) == 1) && std::invocable<decltype(func), Arg...>
     constexpr decltype(auto) operator()(Arg&&... arg) && {
         auto r = std::move(func)(std::forward<Arg>(arg)...);
-        if constexpr (std::invocable<decltype(r)>) { return Fn<decltype(r)>(r); };
+        if constexpr (std::is_function_v<decltype(r)>) { return Fn<decltype(r)>(r); };
 
         return r;
     };
@@ -100,7 +106,12 @@ constexpr decltype(auto) operator<(const Fn<F>& lhs, AppProxy) {
 template <typename F, typename G>
 constexpr decltype(auto) operator >>(const Fn<F>& fn, const Fn<G>& gn) {
     return f [l = fn.func, r = gn.func](auto&&... args) {
-        return r(l(std::forward<decltype(args)>(args)...));
+        auto result = r(l(std::forward<decltype(args)>(args)...));
+        if constexpr (std::is_function_v<decltype(result)>) { 
+            return Fn<decltype(result)>(result);
+        };
+        
+        return result;
     };
 };
 

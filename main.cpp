@@ -3,9 +3,9 @@
 
 using namespace std;
 
-constexpr auto id = f [](auto a) { return a; };
-constexpr auto _const = f [](auto a) { return [a](auto b) { return a; }; };
-constexpr auto flip = f [](auto g) { 
+constexpr auto id = [](auto a) { return a; };
+constexpr auto _const = [](auto a) { return [a](auto b) { return a; }; };
+constexpr auto flip = [](auto g) { 
     return [g](auto b) { 
         return [g, b](auto a) {
             g(a)(b);
@@ -13,10 +13,26 @@ constexpr auto flip = f [](auto g) {
     };
 };
 
+struct Void {};
+
+struct Test { void operator()(); };
+template <typename F>
+struct Deriv : F, Test { };
+
+
+constexpr auto a = [](int a) {
+    return a;
+};
+
+constexpr auto b = [](auto x) {
+    return x;
+};
+
+
 int main() 
 {           
-    auto c = _const(1)(2); // 2
-    auto ci = _const(1) >> id; // g (f b)
-    auto ic = id >> _const; // id(1) -> const(1) -> f b -> 1
+    auto v = Fn<Void>(Void{});
+    auto fa = Fn(a);
+    auto fid = Fn(id);
     return 0;
 };
