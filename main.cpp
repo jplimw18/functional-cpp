@@ -13,7 +13,9 @@ int main()
     };
 
     auto a = flang::monads::Maybe<int>();
-    auto some = flang::monads::Some(10);
+    auto some = Some(10);
+    Maybe<int> none = None;
+
 
     return 0;
 };
