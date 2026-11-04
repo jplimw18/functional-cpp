@@ -20,11 +20,36 @@ namespace flang::monads {
             bool is_some() const { return this->has_value; };
             bool is_none() const { return !this->has_value; };
 
-            template <typename U, typename F>
+            constexpr T& unwrap() & { return this->value; };
+            constexpr T& unwrap() const & { return this->value; };
+
+            template <typename F>
+            requires flang::is_fn_instance_v<F>
             constexpr auto map(F f) const {
+                using R = std::invoke_result_t<F,T>;
                 return this->has_value 
-                    ? Maybe<U>(f(this->value)) 
-                    : Maybe<U>();
+                    ? Maybe<R>(f(this->value))
+                    : Maybe<R>();
+            };
+
+            template <typename F>
+            requires flang::is_fn_instance_v<F>
+            constexpr auto map(Maybe<F>& f) {
+                using R = std::invoke_result_t<F, T>;
+
+                return this->has_value && f.is_some() 
+                    ? Maybe<R>(f.unwrap()(this->value))
+                    : Maybe<R>();
+            };
+
+            template <typename Arg>
+            requires flang::is_fn_instance_v<T>
+            constexpr auto apply(Maybe<Arg>& arg) {
+                using R = std::invoke_result_t<T, Arg>;
+
+                return this->has_value && arg.is_some() 
+                    ? Maybe<R>(this->value(arg.unwrap()))
+                    : Maybe<R>();
             };
     };
 
